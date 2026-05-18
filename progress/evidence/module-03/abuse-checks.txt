@@ -1,0 +1,7 @@
+HTTP/1.1 422 Unprocessable Entity
+date: Fri, 01 May 2026 10:38:11 GMT
+server: uvicorn
+content-length: 150
+content-type: application/json
+
+{"detail":[{"type":"value_error","loc":["body","long_url"],"msg":"Value error, Forbidden protocol","input":"javascript:alert(1)","ctx":{"error":{}}}]}
