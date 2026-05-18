@@ -76,3 +76,18 @@ async def db_insert_link(short_code: str, long_url: str):
     await asyncio.sleep(0.1)  # Simulate database write network latency
     SIMULATED_DB[short_code] = long_url
     return {"short_code": short_code, "long_url": long_url}
+
+# --- DYNAMIC DOMAIN STORAGE ENGINE ---
+# Simulates a indexed SQL table 'whitelisted_domains'
+DYNAMIC_DOMAINS_DB = {"localhost", "example.com", "api.caw.tech"}
+
+async def db_add_whitelisted_domain(domain: str) -> bool:
+    """Inserts a new approved domain target into the persistent database tier."""
+    await asyncio.sleep(0.05)  # Simulate storage write latency
+    DYNAMIC_DOMAINS_DB.add(domain.lower())
+    return True
+
+async def db_is_domain_whitelisted(domain: str) -> bool:
+    """Performs an O(1) indexed lookup against the active domain whitelist."""
+    await asyncio.sleep(0.05)  # Simulate storage read latency
+    return domain.lower() in DYNAMIC_DOMAINS_DB

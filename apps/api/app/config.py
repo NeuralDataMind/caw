@@ -3,8 +3,7 @@ from typing import List
 
 class Settings(BaseSettings):
     # Security Gates
-    SSRF_PROTECTION_ENABLED: bool = True
-    ALLOWED_DOMAINS: List[str] = ["example.com", "localhost"]
+    SSRF_PROTECTION_ENABLED: bool 
     
     
     DATABASE_URL: str 
