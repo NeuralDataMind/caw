@@ -2,32 +2,37 @@ import hashlib
 from fastapi import APIRouter, status, HTTPException
 from app.schemas.link import LinkCreate
 from app.database import db_breaker, db_insert_link, CircuitBreakerOpenException # type: ignore
+from app.config import settings
+import redis.asyncio as aioredis  # Native async Redis driver
 
 router = APIRouter(prefix="/links", tags=["B2B Core Links Engine"])
 
-# Mocked memory map simulating a Redis client connection pool dictionary
-mock_redis_pool = {}
+# Initialize the actual network connection pool targeting the Redis container
+redis_client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_link(link_in: LinkCreate):
     # Generate deterministic 6-character unique identifier hash
     short_code = hashlib.md5(link_in.long_url.encode()).hexdigest()[:6]
 
-    # --- PILLAR 2: REDIS CACHE-ASIDE PATTERN IMPLEMENTATION ---
-    if short_code in mock_redis_pool:
-        print("[REDIS CACHE HIT]: Returning pre-cached resource mapping instantly.")
-        return {"status": "success", "code": short_code, "source": "cache"}
-
-    print("[REDIS CACHE MISS]: Executing read/write stream routing through database infrastructure...")
-    
-    # --- PILLAR 3: DATABASE INFRASTRUCTURE VIA CIRCUIT BREAKER ---
     try:
+        # --- TRUE REDIS CACHE-ASIDE PATTERN ---
+        # Query the actual Redis container over the Docker bridge network
+        cached_url = await redis_client.get(short_code)
+        
+        if cached_url:
+            print("[REDIS CACHE HIT]: Returning verified resource mapping from network cache.")
+            return {"status": "success", "code": short_code, "source": "cache"}
+
+        print("[REDIS CACHE MISS]: Routing stream to relational database infrastructure...")
+        
+        # --- DATABASE INFRASTRUCTURE VIA CIRCUIT BREAKER ---
         # Wrap database interactions inside the circuit breaker pool context
         db_result = await db_breaker.call(db_insert_link, short_code, link_in.long_url)
         db_breaker.handle_success()
         
-        # Populate Redis with a strict production TTL (e.g., 300 seconds)
-        mock_redis_pool[short_code] = link_in.long_url
+        # Write to the actual Redis container with a strict production TTL of 5 minutes
+        await redis_client.set(short_code, link_in.long_url, ex=300)
         
         return {"status": "success", "code": short_code, "source": "database"}
         
@@ -36,8 +41,9 @@ async def create_link(link_in: LinkCreate):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Database degraded. System shedding load gracefully to maintain SLA uptime."
         )
-    except Exception:
+    except Exception as e:
+        print(f"[SYSTEM SYSTEM ERROR]: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Downstream dependency communication timeout."
+            detail="Downstream dependency communication failure."
         )
