@@ -1,7 +1,32 @@
-@"
+# Python Runtime & Bytecode Caches
 .venv/
+venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Sensitive Environment Configurations (Strictly Blocked)
 .env
+.env.local
+.env.development
+.env.production
+
+# IDE and Text Editor Overheads
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.settings/
+
+# System Debris
 .DS_Store
-"@ | Out-File -Encoding utf8 .gitignore
+Thumbs.db
+
+# Local Infrastructure & Log Dumps
+*.log
+local_postgres_data/

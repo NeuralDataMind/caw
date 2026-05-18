@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  web_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SSRF_PROTECTION_ENABLED=True
+      - ALLOWED_DOMAINS=["example.com","localhost","api.caw.tech"]
+      - DATABASE_URL=postgresql://postgres:secret@db_production:5432/links_db
+      - REDIS_URL=redis://cache_backend:6379/0
+    networks:
+      - caw_enterprise_isolated_network
+    depends_on:
+      - db_production
+      - cache_backend
+
+  db_production:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=links_db
+    networks:
+      - caw_enterprise_isolated_network
+    volumes:
+      - postgres_data_store:/var/lib/postgresql/data
+
+  cache_backend:
+    image: redis:7-alpine
+    networks:
+      - caw_enterprise_isolated_network
+
+networks:
+  caw_enterprise_isolated_network:
+    driver: bridge
+
+volumes:
+  postgres_data_store:
