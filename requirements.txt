@@ -6,3 +6,4 @@ redis
 langchain
 langchain-community
 chromadb
+asyncpg
