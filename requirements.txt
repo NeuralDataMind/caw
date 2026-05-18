@@ -3,3 +3,6 @@ uvicorn
 pydantic
 pydantic-settings
 redis
+langchain
+langchain-community
+chromadb

@@ -63,3 +63,16 @@ async def execute_db_transaction_with_jitter(short_code: str, long_url: str):
     
     await asyncio.sleep(sleep_duration)
     return await db_breaker.call(db_insert_link, short_code, long_url)
+# --- CACHE-ASIDE DATA PERSISTENCE PATCH ---
+SIMULATED_DB = {}
+
+async def db_get_long_url(short_code: str):
+    """Simulates a database SELECT query to retrieve the original long URL."""
+    await asyncio.sleep(0.1)  # Simulate database read network latency
+    return SIMULATED_DB.get(short_code)
+
+# Override original mock to write directly to the state machine
+async def db_insert_link(short_code: str, long_url: str):
+    await asyncio.sleep(0.1)  # Simulate database write network latency
+    SIMULATED_DB[short_code] = long_url
+    return {"short_code": short_code, "long_url": long_url}
