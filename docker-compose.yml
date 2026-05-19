@@ -9,7 +9,6 @@ services:
       - "8000:8000"
     environment:
       - SSRF_PROTECTION_ENABLED=True
-      - ALLOWED_DOMAINS=["example.com","localhost","api.caw.tech"]
       - DATABASE_URL=postgresql://postgres:secret@db_production:5432/links_db
       - REDIS_URL=redis://cache_backend:6379/0
     networks:
