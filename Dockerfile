@@ -1,6 +1,4 @@
-# ==========================================
 # STAGE 1: The Builder Environment
-# ==========================================
 FROM python:3.11-slim AS builder
 
 WORKDIR /build
@@ -13,9 +11,7 @@ COPY requirements.txt .
 # Install dependencies into a localized deployment layer folder
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# ==========================================
 # STAGE 2: The Hardened Production Runner
-# ==========================================
 FROM python:3.11-slim AS runner
 
 WORKDIR /app
